@@ -1,6 +1,8 @@
 #include <iostream>
-using namespace std;
+#include "CoreVM.cpp"
+
 int main() {
-    cout << "Hello, World!" << endl;
+    CoreVM vm;
+    vm.start_shell();
     return 0;
 }

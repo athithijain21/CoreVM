@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoreVM Hardware Emulator</title>
+    <!-- Highlight.js CSS for C++ Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <!-- Main External Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>CoreVM Hardware Emulator</h1>
+            <p>Low-Level C++ CPU & Memory Simulator with Interactive Debugger Interface</p>
+        </header>
+
+        <div class="controls">
+            <h2>Source Implementation</h2>
+            <button id="copy-btn" class="btn">Copy Code</button>
+        </div>
+
+        <!-- C++ Source Code Display Card -->
+        <div class="code-card">
+            <div class="card-header">CoreVM.cpp</div>
+            <pre><code class="language-cpp">
+#include <iostream>
+#include <vector>
+#include <string>
+#include <cstdint>
+
+class CoreVM {
+private:
+    uint8_t memory[4096] = {0}; // 4KB Memory Array
+    uint16_t registers[4] = {0}; // R0, R1, R2, R3
+    uint16_t PC = 0x0;           // Program Counter
+    bool running = true;
+    std::string system_status = "SYSTEM READY";
+
+public:
+    void write_memory(uint16_t address, int value) {
+        if (address >= 0x1000) {
+            // Kernel Panic Logic
+            system_status = "!!! KERNEL PANIC: OUT OF BOUNDS @ 0x" + std::to_string(address) + " !!!";
+            running = false;
+        } else {
+            memory[address] = static_cast<uint8_t>(value);
+            system_status = "Memory Write Successful.";
+        }
+    }
+
+    void render_ui() {
+        std::cout << "=========================================\n";
+        std::cout << "||        CORE-VM INTERFACE            ||\n";
+        std::cout << "=========================================\n";
+        std::cout << "[ CPU STATUS ]          [ PROGRAM COUNTER ]\n";
+        std::cout << "R0: " << (int)registers[0] << "  R1: " << (int)registers[1] << "      PC: 0x" << std::hex << PC << "\n";
+        std::cout << "R2: " << (int)registers[2] << "  R3: " << (int)registers[3] << "      STATE: " << (running ? "ACTIVE" : "HALTED") << "\n";
+        std::cout << "-----------------------------------------\n";
+        std::cout << "[ MEMORY MAP (Hex) ]\n";
+        for(int i = 0; i < 16; i++) {
+            std::cout << (i < 10 ? "0" : "") << std::hex << (int)memory[i] << " ";
+        }
+        std::cout << "\n-----------------------------------------\n";
+        std::cout << "[ MESSAGE ]: " << system_status << "\n";
+        std::cout << "=========================================\n";
+    }
+
+    void start_shell() {
+        std::string input;
+        while (running) {
+            render_ui();
+            std::cout << "\nCoreOS> ";
+            std::getline(std::cin, input);
+            if (input == "exit") break;
+        }
+    }
+};
+            </code></pre>
+        </div>
+
+        <!-- Terminal Output Screen Card -->
+        <div class="terminal-card">
+            <div class="card-header">Live Debugger Console</div>
+            <div class="terminal-body" id="status-output">
+###########################################
+||         CORE-VM INTERFACE             ||
+###########################################
+ [ CPU STATUS ]          [ PROGRAM COUNTER ]
+  R0:  0  R1:  0          PC: 0x0
+  R2:  0  R3:  0          STATE: ACTIVE
+-------------------------------------------
+ [ MEMORY MAP (Hex) ]
+  00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+-------------------------------------------
+ [ MESSAGE ]: SYSTEM READY
+###########################################
+
+CoreOS>
+            </div>
+        </div>
+    </div>
+
+    <!-- Syntax Highlighting Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+    <!-- Custom Interactive Dashboard Script -->
+    <script src="script.js"></script>
+</body>
+</html>
