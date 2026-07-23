@@ -20,7 +20,6 @@ private:
     std::string system_status = "SYSTEM READY";
 
 public:
-    // Helper function for cross-platform screen clearing
     void clear_screen() {
 #ifdef _WIN32
         system("cls");
@@ -29,18 +28,8 @@ public:
 #endif
     }
 
-    // Helper function for cross-platform delays
-    void sleep_ms(int milliseconds) {
-#ifdef _WIN32
-        Sleep(milliseconds);
-#else
-        usleep(milliseconds * 1000);
-#endif
-    }
-
     void write_memory(uint16_t address, int value) {
         if (address >= 0x1000) {
-            // Kernel Panic Logic
             system_status = "!!! KERNEL PANIC: OUT OF BOUNDS @ 0x" + std::to_string(address) + " !!!";
             running = false;
         } else {
@@ -49,8 +38,39 @@ public:
         }
     }
 
+    // ALU OPERATIONS
+    void op_add() {
+        registers[0] = registers[1] + registers[2];
+        PC += 2;
+        system_status = "EXEC: ADD -> R0 = " + std::to_string(registers[0]);
+    }
+
+    void op_sub() {
+        registers[0] = registers[1] - registers[2];
+        PC += 2;
+        system_status = "EXEC: SUB -> R0 = " + std::to_string(registers[0]);
+    }
+
+    void op_and() {
+        registers[0] = registers[1] & registers[2];
+        PC += 2;
+        system_status = "EXEC: AND -> R0 = " + std::to_string(registers[0]);
+    }
+
+    void op_or() {
+        registers[0] = registers[1] | registers[2];
+        PC += 2;
+        system_status = "EXEC: OR  -> R0 = " + std::to_string(registers[0]);
+    }
+
+    void load_inputs(uint16_t val1, uint16_t val2) {
+        registers[1] = val1;
+        registers[2] = val2;
+        system_status = "LOADED: R1=" + std::to_string(val1) + ", R2=" + std::to_string(val2);
+    }
+
     void render_ui() {
-        clear_screen(); // Clears terminal based on OS
+        clear_screen();
         std::cout << "=========================================\n";
         std::cout << "||        CORE-VM INTERFACE            ||\n";
         std::cout << "=========================================\n";
@@ -65,15 +85,39 @@ public:
         std::cout << "\n-----------------------------------------\n";
         std::cout << "[ MESSAGE ]: " << system_status << "\n";
         std::cout << "=========================================\n";
+        std::cout << " Commands: load <val1> <val2> | add | sub | and | or | panic | exit\n";
     }
 
     void start_shell() {
-        std::string input;
+        std::string command;
         while (running) {
             render_ui();
             std::cout << "\nCoreOS> ";
-            std::getline(std::cin, input);
-            if (input == "exit") break;
+            std::cin >> command;
+
+            if (command == "load") {
+                uint16_t v1, v2;
+                std::cin >> v1 >> v2;
+                load_inputs(v1, v2);
+            } else if (command == "add") {
+                op_add();
+            } else if (command == "sub") {
+                op_sub();
+            } else if (command == "and") {
+                op_and();
+            } else if (command == "or") {
+                op_or();
+            } else if (command == "panic") {
+                write_memory(0x1000, 99);
+            } else if (command == "exit") {
+                break;
+            }
         }
     }
 };
+
+int main() {
+    CoreVM vm;
+    vm.start_shell();
+    return 0;
+}
